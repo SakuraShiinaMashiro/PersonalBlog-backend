@@ -46,7 +46,8 @@ public class AnimeServiceImpl implements AnimeService {
                     .uri("/search/subjects")
                     .body(Map.of(
                             "keyword", keyword,
-                            "filter", Map.of("type", List.of(2)) // 2 为动画
+                            // 2 为动画
+                            "filter", Map.of("type", List.of(2))
                     ))
                     .retrieve()
                     .body(BangumiDTOs.SubjectSearchResponse.class);
@@ -117,7 +118,6 @@ public class AnimeServiceImpl implements AnimeService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void toggleEpisode(Long animeId, Integer episodeIndex) {
         AnimeProgress progress = progressMapper.selectById(animeId);
         if (progress == null) {

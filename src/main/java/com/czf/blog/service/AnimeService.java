@@ -1,8 +1,6 @@
 package com.czf.blog.service;
 
 import com.czf.blog.dto.BangumiDTOs;
-import com.czf.blog.entity.AnimeSubject;
-import com.czf.blog.entity.AnimeProgress;
 import java.util.List;
 import java.util.Map;
 
