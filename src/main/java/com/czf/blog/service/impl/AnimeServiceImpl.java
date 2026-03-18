@@ -8,13 +8,10 @@ import com.czf.blog.mapper.AnimeProgressMapper;
 import com.czf.blog.mapper.AnimeSubjectMapper;
 import com.czf.blog.service.AnimeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,77 +20,80 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * @author challenge
+ * 追番模块业务实现类
+ * @author Gemini
+ * @date 2026-03-18
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AnimeServiceImpl implements AnimeService {
 
     private final AnimeSubjectMapper subjectMapper;
     private final AnimeProgressMapper progressMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
-
-    private static final String BGM_API_BASE = "https://api.bgm.tv/v0";
-    private static final String USER_AGENT = "SakuraShiinaMashiro/PersonalBlog";
-
-    private <T> T fetchFromBangumi(String url, Class<T> responseType) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("User-Agent", USER_AGENT);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<T> response = restTemplate.exchange(url, HttpMethod.GET, entity, responseType);
-        return response.getBody();
-    }
-
-    private <T> T postToBangumi(String url, Object body, Class<T> responseType) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("User-Agent", USER_AGENT);
-        headers.set("Content-Type", "application/json");
-        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
-        ResponseEntity<T> response = restTemplate.exchange(url, HttpMethod.POST, entity, responseType);
-        return response.getBody();
-    }
+    private final RestClient bangumiRestClient;
 
     @Override
     public List<BangumiDTOs.SubjectItem> searchBangumi(String keyword) {
-        String url = BGM_API_BASE + "/search/subjects";
-        Map<String, Object> body = new HashMap<>();
-        body.put("keyword", keyword);
-        Map<String, Object> filter = new HashMap<>();
-        // Type 2 is Anime
-        filter.put("type", List.of(2));
-        body.put("filter", filter);
-        
-        BangumiDTOs.SubjectSearchResponse response = postToBangumi(url, body, BangumiDTOs.SubjectSearchResponse.class);
-        return response != null ? response.data() : List.of();
+        log.info("Searching anime on Bangumi with keyword: {}", keyword);
+        try {
+            // 使用 GET /search/subjects 接口
+            // 注意：Bangumi v0 的搜索接口建议使用 POST 以支持更复杂的过滤，
+            // 但为了简化并符合 spec 中的 GET 设计，我们也可以使用查询参数。
+            // 实际上 Bangumi v0 搜索建议用 POST，这里我们根据实际情况调整。
+            
+            BangumiDTOs.SubjectSearchResponse response = bangumiRestClient.post()
+                    .uri("/search/subjects")
+                    .body(Map.of(
+                            "keyword", keyword,
+                            "filter", Map.of("type", List.of(2)) // 2 为动画
+                    ))
+                    .retrieve()
+                    .body(BangumiDTOs.SubjectSearchResponse.class);
+
+            return response != null ? response.data() : List.of();
+        } catch (Exception e) {
+            log.error("Failed to search Bangumi with keyword: {}", keyword, e);
+            // 按照设计决策，外部服务失败时返回空列表或友好错误
+            return List.of();
+        }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importFromBangumi(int bgmId, int airYear, int airSeason) {
-        // 1. Fetch details from Bangumi (Strictly follow v0 GET /subjects/{id} specification)
-        String url = BGM_API_BASE + "/subjects/" + bgmId;
-        BangumiDTOs.SubjectItem item = fetchFromBangumi(url, BangumiDTOs.SubjectItem.class);
+        log.info("Importing anime from Bangumi, bgmId: {}", bgmId);
+        try {
+            BangumiDTOs.SubjectItem item = bangumiRestClient.get()
+                    .uri("/subjects/{id}", bgmId)
+                    .retrieve()
+                    .body(BangumiDTOs.SubjectItem.class);
 
-        // 2. Save Subject
-        AnimeSubject subject = new AnimeSubject();
-        subject.setBgmId(bgmId);
-        if (item == null) {
-            throw new RuntimeException("未能获取到番剧详情，bgmId: " + bgmId);
+            if (item == null) {
+                throw new RuntimeException("未能获取到番剧详情，bgmId: " + bgmId);
+            }
+
+            // 保存番剧元数据
+            AnimeSubject subject = new AnimeSubject();
+            subject.setBgmId(bgmId);
+            subject.setTitle(item.getDisplayName());
+            subject.setImageUrl(item.images() != null ? item.images().large() : "");
+            subject.setEps(item.eps());
+            subject.setAirYear(airYear);
+            subject.setAirSeason(airSeason);
+            subject.setStatus(1); // 默认为“在看”
+            subjectMapper.insert(subject);
+
+            // 初始化进度
+            AnimeProgress progress = new AnimeProgress();
+            progress.setAnimeId(subject.getId());
+            progress.setWatchedEps(new ArrayList<>());
+            progressMapper.insert(progress);
+
+        } catch (Exception e) {
+            log.error("Failed to import anime from Bangumi, bgmId: {}", bgmId, e);
+            throw new RuntimeException("导入番剧失败: " + e.getMessage());
         }
-        subject.setTitle(item.getDisplayName());
-        subject.setImageUrl(item.images() != null ? item.images().large() : "");
-        subject.setEps(item.eps());
-        subject.setAirYear(airYear);
-        subject.setAirSeason(airSeason);
-        // Default to 'Watching'
-        subject.setStatus(1);
-        subjectMapper.insert(subject);
-
-        // 3. Initialize Progress
-        AnimeProgress progress = new AnimeProgress();
-        progress.setAnimeId(subject.getId());
-        progress.setWatchedEps(new ArrayList<>());
-        progressMapper.insert(progress);
     }
 
     @Override
@@ -134,7 +134,7 @@ public class AnimeServiceImpl implements AnimeService {
         } else {
             watched.add(episodeIndex);
         }
-        
+
         progress.setWatchedEps(watched);
         progressMapper.updateById(progress);
     }

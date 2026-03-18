@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 番剧管理控制器
+ * 追番模块控制器
+ * @author Gemini
+ * @date 2026-03-18
  */
 @RestController
 @RequestMapping("/api/anime")
@@ -22,6 +24,8 @@ public class AnimeController {
 
     /**
      * 搜索 Bangumi 番剧
+     * @param keyword 搜索关键词
+     * @return 匹配的番剧列表
      */
     @GetMapping("/search")
     public Result<List<BangumiDTOs.SubjectItem>> search(@RequestParam String keyword) {
@@ -29,7 +33,9 @@ public class AnimeController {
     }
 
     /**
-     * 导入番剧元数据并初始化进度
+     * 导入番剧元数据并初始化本地追番进度
+     * @param params 包含 bgmId, airYear, airSeason 的映射
+     * @return 统一返回结果
      */
     @PostMapping("/import")
     public Result<Void> importAnime(@RequestBody Map<String, Object> params) {
@@ -41,7 +47,10 @@ public class AnimeController {
     }
 
     /**
-     * 获取本地番剧列表及其进度
+     * 获取指定季度下的本地番剧列表及其追番进度
+     * @param year 年份
+     * @param season 季度 (1-4)
+     * @return 包含番剧元数据和进度信息的列表
      */
     @GetMapping("/list")
     public Result<List<Map<String, Object>>> getList(
@@ -51,7 +60,9 @@ public class AnimeController {
     }
 
     /**
-     * 切换集数观看状态
+     * 切换特定集数的观看状态 (幂等 Toggle 逻辑)
+     * @param params 包含 animeId, episodeIndex 的映射
+     * @return 统一返回结果
      */
     @PostMapping("/toggle")
     public Result<Void> toggleEpisode(@RequestBody Map<String, Object> params) {
@@ -62,7 +73,9 @@ public class AnimeController {
     }
 
     /**
-     * 更新番剧状态
+     * 更新番剧的追番状态
+     * @param params 包含 animeId, status 的映射
+     * @return 统一返回结果
      */
     @PutMapping("/status")
     public Result<Void> updateStatus(@RequestBody Map<String, Object> params) {
