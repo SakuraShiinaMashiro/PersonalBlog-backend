@@ -5,7 +5,8 @@ import java.util.List;
 
 /**
  * 分页数据封装
- * @param <T> 数据类型
+ * @author challenge
+ * @date 2026-3-18
  */
 @Data
 public class PageData<T> {

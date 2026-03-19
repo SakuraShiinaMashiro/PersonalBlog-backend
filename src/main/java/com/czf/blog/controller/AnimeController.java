@@ -28,7 +28,7 @@ public class AnimeController {
      * @return 匹配的番剧列表
      */
     @GetMapping("/search")
-    public Result<List<BangumiDTOs.SubjectItem>> search(@RequestParam String keyword) {
+    public Result<List<BangumiDTOs.SubjectItem>> search(@RequestParam(value = "keyword") String keyword) {
         return Result.success(animeService.searchBangumi(keyword));
     }
 
@@ -54,8 +54,8 @@ public class AnimeController {
      */
     @GetMapping("/list")
     public Result<List<Map<String, Object>>> getList(
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Integer season) {
+            @RequestParam(value = "year", required = false) Integer year,
+            @RequestParam(value = "season", required = false) Integer season) {
         return Result.success(animeService.getAnimeListWithProgress(year, season));
     }
 
