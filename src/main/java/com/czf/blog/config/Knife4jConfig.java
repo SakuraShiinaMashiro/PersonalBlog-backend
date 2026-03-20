@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Knife4j / OpenAPI 3 配置
  *
- * @author Gemini
+ * @author czf
  * @date 2026-03-20
  */
 @Configuration
