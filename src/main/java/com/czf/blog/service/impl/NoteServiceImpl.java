@@ -151,7 +151,7 @@ public class NoteServiceImpl implements NoteService {
 
         List<Long> tagIds = noteTags.stream().map(BlogNoteTag::getTagId).collect(Collectors.toList());
         if (tagIds.isEmpty()) return new ArrayList<>();
-        List<BlogTag> tags = tagMapper.selectBatchIds(tagIds);
+        List<BlogTag> tags = tagMapper.selectByIds(tagIds);
         return tags.stream().map(BlogTag::getName).collect(Collectors.toList());
     }
 }
