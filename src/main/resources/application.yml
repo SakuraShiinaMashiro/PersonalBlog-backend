@@ -17,3 +17,13 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: true
 
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+
+knife4j:
+  setting:
+    language: zh_CN
+
