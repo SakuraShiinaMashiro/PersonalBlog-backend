@@ -25,6 +25,7 @@ import java.util.Set;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 
 /**
@@ -186,6 +187,80 @@ public class AnimeServiceImpl implements AnimeService {
 
         progress.setWatchedEps(normalizedWatched);
         progress.setStatus(calculateStatus(watchedCount, totalEpisodes));
+        progress.setLastWatchAt(LocalDateTime.now());
+
+        if (isNewProgress) {
+            progressMapper.insert(progress);
+        } else {
+            progressMapper.updateById(progress);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void seenToEpisode(Long animeId, Integer episode) {
+        AnimeSubject subject = requireSubject(animeId);
+        Integer totalEpisodes = subject.getEps();
+        if (totalEpisodes == null || totalEpisodes <= 0) {
+            throw new IllegalArgumentException("总集数无效，无法快捷更新到指定集");
+        }
+        if (episode == null || episode < 1) {
+            throw new IllegalArgumentException("目标集数必须大于等于1");
+        }
+        int finalEpisode = Math.min(episode, totalEpisodes);
+        List<Integer> watchedEpisodes = IntStream.rangeClosed(1, finalEpisode).boxed().collect(Collectors.toList());
+        applyProgress(subject, watchedEpisodes);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void completeAnime(Long animeId) {
+        AnimeSubject subject = requireSubject(animeId);
+        Integer totalEpisodes = subject.getEps();
+        if (totalEpisodes == null || totalEpisodes <= 0) {
+            throw new IllegalArgumentException("总集数无效，无法执行一键看完");
+        }
+        List<Integer> watchedEpisodes = IntStream.rangeClosed(1, totalEpisodes).boxed().collect(Collectors.toList());
+        applyProgress(subject, watchedEpisodes);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void resetProgress(Long animeId) {
+        AnimeSubject subject = requireSubject(animeId);
+        applyProgress(subject, List.of());
+    }
+
+    private AnimeSubject requireSubject(Long animeId) {
+        AnimeSubject subject = subjectMapper.selectById(animeId);
+        if (subject == null) {
+            throw new IllegalArgumentException("番剧不存在");
+        }
+        return subject;
+    }
+
+    private void applyProgress(AnimeSubject subject, List<Integer> watchedEpisodes) {
+        Integer totalEpisodes = subject.getEps();
+        int maxEpisode = (totalEpisodes != null && totalEpisodes > 0) ? totalEpisodes : Integer.MAX_VALUE;
+
+        Long animeId = subject.getId();
+        AnimeProgress progress = progressMapper.selectById(animeId);
+        boolean isNewProgress = progress == null;
+        if (isNewProgress) {
+            progress = new AnimeProgress();
+            progress.setAnimeId(animeId);
+            progress.setTrackDate(LocalDate.now());
+        }
+
+        List<Integer> normalizedWatched = watchedEpisodes.stream()
+                .filter(Objects::nonNull)
+                .filter(ep -> ep >= 1 && ep <= maxEpisode)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+
+        progress.setWatchedEps(normalizedWatched);
+        progress.setStatus(calculateStatus(normalizedWatched.size(), totalEpisodes));
         progress.setLastWatchAt(LocalDateTime.now());
 
         if (isNewProgress) {

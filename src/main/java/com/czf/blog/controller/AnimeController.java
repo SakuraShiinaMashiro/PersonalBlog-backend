@@ -66,4 +66,29 @@ public class AnimeController {
         animeService.toggleEpisode(animeId, episodeIndex);
         return Result.success();
     }
+
+    @Operation(summary = "快捷设置看到第N集", description = "将追番进度覆盖为 1..N，并自动更新状态")
+    @PutMapping("/progress/seen-to")
+    public Result<Void> seenToEpisode(@RequestBody Map<String, Object> params) {
+        Long animeId = Long.valueOf(params.get("animeId").toString());
+        Integer episode = Integer.parseInt(params.get("episode").toString());
+        animeService.seenToEpisode(animeId, episode);
+        return Result.success();
+    }
+
+    @Operation(summary = "快捷一键看完", description = "将追番进度覆盖为 1..总集数，并自动更新状态")
+    @PutMapping("/progress/complete")
+    public Result<Void> completeAnime(@RequestBody Map<String, Object> params) {
+        Long animeId = Long.valueOf(params.get("animeId").toString());
+        animeService.completeAnime(animeId);
+        return Result.success();
+    }
+
+    @Operation(summary = "快捷重置进度", description = "将追番进度清空，并自动更新状态")
+    @PutMapping("/progress/reset")
+    public Result<Void> resetProgress(@RequestBody Map<String, Object> params) {
+        Long animeId = Long.valueOf(params.get("animeId").toString());
+        animeService.resetProgress(animeId);
+        return Result.success();
+    }
 }

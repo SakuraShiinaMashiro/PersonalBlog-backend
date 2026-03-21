@@ -37,4 +37,26 @@ public interface AnimeService {
      * @param episodeIndex 集数索引 (通常从 1 开始)
      */
     void toggleEpisode(Long animeId, Integer episodeIndex);
+
+    /**
+     * 将追番进度快速更新为“看到第 N 集”。
+     *
+     * @param animeId 本地番剧 ID
+     * @param episode 目标集数（覆盖为 1..N）
+     */
+    void seenToEpisode(Long animeId, Integer episode);
+
+    /**
+     * 将追番进度快速更新为“一键看完”。
+     *
+     * @param animeId 本地番剧 ID
+     */
+    void completeAnime(Long animeId);
+
+    /**
+     * 将追番进度快速重置为空。
+     *
+     * @param animeId 本地番剧 ID
+     */
+    void resetProgress(Long animeId);
 }
