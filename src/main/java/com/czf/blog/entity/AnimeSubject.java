@@ -2,6 +2,7 @@ package com.czf.blog.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -17,12 +18,12 @@ public class AnimeSubject {
     private String imageUrl;
     
     private Integer eps;
+
+    private LocalDate airDate;
     
     private Integer airYear;
     
     private Integer airSeason;
-    
-    private Integer status; // 0想看, 1在看, 2已完成
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

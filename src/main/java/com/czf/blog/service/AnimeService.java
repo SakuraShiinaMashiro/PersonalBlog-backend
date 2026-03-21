@@ -17,13 +17,11 @@ public interface AnimeService {
      * 从 Bangumi 导入番剧元数据并初始化本地追番进度
      *
      * @param bgmId     Bangumi 条目 ID
-     * @param airYear   放送年份
-     * @param airSeason 放送季度 (1-4)
      */
-    void importFromBangumi(int bgmId, int airYear, int airSeason);
+    void importFromBangumi(int bgmId);
 
     /**
-     * 获取指定季度下的本地番剧列表及其追番进度
+     * 获取指定年份的某个季度下的本地番剧列表及其追番进度（番剧的首播时间）
      *
      * @param year   年份 (可选)
      * @param season 季度 (可选, 1-4)
@@ -38,12 +36,4 @@ public interface AnimeService {
      * @param episodeIndex 集数索引 (通常从 1 开始)
      */
     void toggleEpisode(Long animeId, Integer episodeIndex);
-
-    /**
-     * 更新番剧的追番状态 (想看/在看/已完成)
-     *
-     * @param animeId 本地番剧 ID
-     * @param status  目标状态 (0:想看, 1:在看, 2:已完成)
-     */
-    void updateStatus(Long animeId, Integer status);
 }
