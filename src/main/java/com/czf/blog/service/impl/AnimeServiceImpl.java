@@ -14,9 +14,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.stream.Collectors;
 
 /**
@@ -62,7 +69,7 @@ public class AnimeServiceImpl implements AnimeService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void importFromBangumi(int bgmId, int airYear, int airSeason) {
+    public void importFromBangumi(int bgmId) {
         log.info("Importing anime from Bangumi, bgmId: {}", bgmId);
         try {
             BangumiDTOs.SubjectItem item = bangumiRestClient.get()
@@ -75,20 +82,23 @@ public class AnimeServiceImpl implements AnimeService {
             }
 
             // 保存番剧元数据
+            LocalDate airDate = parseAirDate(item.date());
             AnimeSubject subject = new AnimeSubject();
             subject.setBgmId(bgmId);
             subject.setTitle(item.getDisplayName());
             subject.setImageUrl(item.images() != null ? item.images().large() : "");
             subject.setEps(item.eps());
-            subject.setAirYear(airYear);
-            subject.setAirSeason(airSeason);
-            subject.setStatus(1); // 默认为“在看”
+            subject.setAirDate(airDate);
+            subject.setAirYear(airDate != null ? airDate.getYear() : null);
+            subject.setAirSeason(airDate != null ? resolveSeason(airDate.getMonthValue()) : null);
             subjectMapper.insert(subject);
 
             // 初始化进度
             AnimeProgress progress = new AnimeProgress();
             progress.setAnimeId(subject.getId());
+            progress.setStatus(0);
             progress.setWatchedEps(new ArrayList<>());
+            progress.setTrackDate(LocalDate.now());
             progressMapper.insert(progress);
 
         } catch (Exception e) {
@@ -106,44 +116,106 @@ public class AnimeServiceImpl implements AnimeService {
         if (season != null) {
             queryWrapper.eq(AnimeSubject::getAirSeason, season);
         }
-        queryWrapper.orderByDesc(AnimeSubject::getCreateTime);
-
         List<AnimeSubject> subjects = subjectMapper.selectList(queryWrapper);
         return subjects.stream().map(s -> {
             Map<String, Object> map = new HashMap<>();
             map.put("subject", s);
             map.put("progress", progressMapper.selectById(s.getId()));
             return map;
-        }).collect(Collectors.toList());
+        }).sorted(Comparator.comparing(
+                item -> {
+                    AnimeProgress progress = (AnimeProgress) item.get("progress");
+                    return progress == null ? null : progress.getTrackDate();
+                },
+                Comparator.nullsLast(Comparator.reverseOrder())
+        )).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void toggleEpisode(Long animeId, Integer episodeIndex) {
-        AnimeProgress progress = progressMapper.selectById(animeId);
-        if (progress == null) {
+        AnimeSubject subject = subjectMapper.selectById(animeId);
+        if (subject == null || episodeIndex == null) {
             return;
         }
 
-        List<Integer> watched = progress.getWatchedEps();
-        if (watched == null) {
-            watched = new ArrayList<>();
+        Integer totalEpisodes = subject.getEps();
+        if (totalEpisodes == null || totalEpisodes <= 0 || episodeIndex < 1 || episodeIndex > totalEpisodes) {
+            return;
         }
 
-        if (watched.contains(episodeIndex)) {
-            watched.remove(episodeIndex);
+        AnimeProgress progress = progressMapper.selectById(animeId);
+        boolean isNewProgress = progress == null;
+        if (isNewProgress) {
+            progress = new AnimeProgress();
+            progress.setAnimeId(animeId);
+            progress.setTrackDate(LocalDate.now());
+            progress.setWatchedEps(new ArrayList<>());
+        }
+
+        Set<Integer> watchedSet = progress.getWatchedEps() == null
+                ? new HashSet<>()
+                : progress.getWatchedEps().stream()
+                .filter(Objects::nonNull)
+                .filter(ep -> ep >= 1 && ep <= totalEpisodes)
+                .collect(Collectors.toSet());
+
+        if (watchedSet.contains(episodeIndex)) {
+            watchedSet.remove(episodeIndex);
         } else {
-            watched.add(episodeIndex);
+            watchedSet.add(episodeIndex);
         }
 
-        progress.setWatchedEps(watched);
-        progressMapper.updateById(progress);
+        List<Integer> normalizedWatched = watchedSet.stream().sorted().collect(Collectors.toList());
+        int watchedCount = normalizedWatched.size();
+
+        progress.setWatchedEps(normalizedWatched);
+        progress.setStatus(calculateStatus(watchedCount, totalEpisodes));
+        progress.setLastWatchAt(LocalDateTime.now());
+
+        if (isNewProgress) {
+            progressMapper.insert(progress);
+        } else {
+            progressMapper.updateById(progress);
+        }
     }
 
-    @Override
-    public void updateStatus(Long animeId, Integer status) {
-        AnimeSubject subject = new AnimeSubject();
-        subject.setId(animeId);
-        subject.setStatus(status);
-        subjectMapper.updateById(subject);
+    private Integer calculateStatus(int watchedCount, Integer totalEpisodes) {
+        if (watchedCount <= 0) {
+            return 0;
+        }
+        if (totalEpisodes != null && totalEpisodes > 0 && watchedCount >= totalEpisodes) {
+            return 2;
+        }
+        return 1;
+    }
+
+    private LocalDate parseAirDate(String rawDate) {
+        if (rawDate == null || rawDate.isBlank()) {
+            return null;
+        }
+        String normalized = rawDate.trim();
+        if (normalized.length() >= 10) {
+            normalized = normalized.substring(0, 10);
+        }
+        try {
+            return LocalDate.parse(normalized);
+        } catch (DateTimeParseException e) {
+            log.warn("Failed to parse air date from Bangumi: {}", rawDate);
+            return null;
+        }
+    }
+
+    private Integer resolveSeason(int month) {
+        if (month <= 3) {
+            return 1;
+        }
+        if (month <= 6) {
+            return 2;
+        }
+        if (month <= 9) {
+            return 3;
+        }
+        return 4;
     }
 }

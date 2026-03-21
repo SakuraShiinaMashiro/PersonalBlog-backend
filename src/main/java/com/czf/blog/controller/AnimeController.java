@@ -24,7 +24,7 @@ import java.util.Map;
 @RequestMapping("/api/anime")
 @RequiredArgsConstructor
 @CrossOrigin
-@Tag(name = "追番管理", description = "番剧搜索、导入、列表查询、进度与状态管理")
+@Tag(name = "追番管理", description = "番剧搜索、导入、列表查询与进度管理")
 public class AnimeController {
 
     private final AnimeService animeService;
@@ -41,10 +41,8 @@ public class AnimeController {
     @Operation(summary = "导入番剧", description = "从 Bangumi 导入番剧元数据到本地库并初始化追番进度")
     @PostMapping("/import")
     public Result<Void> importAnime(@RequestBody Map<String, Object> params) {
-        int bgmId = (int) params.get("bgmId");
-        int airYear = (int) params.get("airYear");
-        int airSeason = (int) params.get("airSeason");
-        animeService.importFromBangumi(bgmId, airYear, airSeason);
+        int bgmId = Integer.parseInt(params.get("bgmId").toString());
+        animeService.importFromBangumi(bgmId);
         return Result.success();
     }
 
@@ -64,17 +62,8 @@ public class AnimeController {
     @PostMapping("/toggle")
     public Result<Void> toggleEpisode(@RequestBody Map<String, Object> params) {
         Long animeId = Long.valueOf(params.get("animeId").toString());
-        Integer episodeIndex = (Integer) params.get("episodeIndex");
+        Integer episodeIndex = Integer.parseInt(params.get("episodeIndex").toString());
         animeService.toggleEpisode(animeId, episodeIndex);
-        return Result.success();
-    }
-
-    @Operation(summary = "更新追番状态", description = "修改番剧的追番状态：0-想看，1-在看，2-已完结")
-    @PutMapping("/status")
-    public Result<Void> updateStatus(@RequestBody Map<String, Object> params) {
-        Long animeId = Long.valueOf(params.get("animeId").toString());
-        Integer status = (Integer) params.get("status");
-        animeService.updateStatus(animeId, status);
         return Result.success();
     }
 }
