@@ -5,6 +5,7 @@ import com.czf.blog.dto.AnimeImportResult;
 import com.czf.blog.dto.BangumiDTOs;
 import com.czf.blog.entity.AnimeProgress;
 import com.czf.blog.entity.AnimeSubject;
+import com.czf.blog.exception.BizException;
 import com.czf.blog.mapper.AnimeProgressMapper;
 import com.czf.blog.mapper.AnimeSubjectMapper;
 import com.czf.blog.service.AnimeService;
@@ -80,7 +81,7 @@ public class AnimeServiceImpl implements AnimeService {
                     .body(BangumiDTOs.SubjectItem.class);
 
             if (item == null) {
-                throw new RuntimeException("未能获取到番剧详情，bgmId: " + bgmId);
+                throw new BizException("未能获取到番剧详情，bgmId: " + bgmId);
             }
 
             LocalDate airDate = parseAirDate(item.date());
@@ -117,9 +118,11 @@ public class AnimeServiceImpl implements AnimeService {
             subjectMapper.updateById(existingSubject);
             return AnimeImportResult.updated();
 
+        } catch (BizException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to import anime from Bangumi, bgmId: {}", bgmId, e);
-            throw new RuntimeException("导入番剧失败: " + e.getMessage());
+            throw new BizException("导入番剧失败: " + e.getMessage());
         }
     }
 
@@ -202,10 +205,10 @@ public class AnimeServiceImpl implements AnimeService {
         AnimeSubject subject = requireSubject(animeId);
         Integer totalEpisodes = subject.getEps();
         if (totalEpisodes == null || totalEpisodes <= 0) {
-            throw new IllegalArgumentException("总集数无效，无法快捷更新到指定集");
+            throw new BizException("总集数无效，无法快捷更新到指定集");
         }
         if (episode == null || episode < 1) {
-            throw new IllegalArgumentException("目标集数必须大于等于1");
+            throw new BizException("目标集数必须大于等于1");
         }
         int finalEpisode = Math.min(episode, totalEpisodes);
         List<Integer> watchedEpisodes = IntStream.rangeClosed(1, finalEpisode).boxed().collect(Collectors.toList());
@@ -218,7 +221,7 @@ public class AnimeServiceImpl implements AnimeService {
         AnimeSubject subject = requireSubject(animeId);
         Integer totalEpisodes = subject.getEps();
         if (totalEpisodes == null || totalEpisodes <= 0) {
-            throw new IllegalArgumentException("总集数无效，无法执行一键看完");
+            throw new BizException("总集数无效，无法执行一键看完");
         }
         List<Integer> watchedEpisodes = IntStream.rangeClosed(1, totalEpisodes).boxed().collect(Collectors.toList());
         applyProgress(subject, watchedEpisodes);
@@ -234,7 +237,7 @@ public class AnimeServiceImpl implements AnimeService {
     private AnimeSubject requireSubject(Long animeId) {
         AnimeSubject subject = subjectMapper.selectById(animeId);
         if (subject == null) {
-            throw new IllegalArgumentException("番剧不存在");
+            throw new BizException("番剧不存在");
         }
         return subject;
     }
