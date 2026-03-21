@@ -2,6 +2,7 @@ package com.czf.blog.service;
 
 import com.czf.blog.dto.AnimeImportResult;
 import com.czf.blog.dto.BangumiDTOs;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -18,8 +19,9 @@ public interface AnimeService {
      * 从 Bangumi 导入番剧元数据并初始化本地追番进度
      *
      * @param bgmId     Bangumi 条目 ID
+     * @param trackDate 开始追番时间（可空，空则默认当天）
      */
-    AnimeImportResult importFromBangumi(int bgmId);
+    AnimeImportResult importFromBangumi(int bgmId, LocalDate trackDate);
 
     /**
      * 获取指定年份的某个季度下的本地番剧列表及其追番进度（番剧的首播时间）
@@ -59,4 +61,12 @@ public interface AnimeService {
      * @param animeId 本地番剧 ID
      */
     void resetProgress(Long animeId);
+
+    /**
+     * 更新指定番剧的开始追番时间。
+     *
+     * @param animeId   本地番剧 ID
+     * @param trackDate 新的开始追番日期
+     */
+    void updateTrackDate(Long animeId, LocalDate trackDate);
 }
