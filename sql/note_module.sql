@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS `blog_note`;
+DROP TABLE IF EXISTS `blog_tag`;
+DROP TABLE IF EXISTS `blog_note_tag`;
 -- 笔记主表 (blog_note)
 CREATE TABLE IF NOT EXISTS `blog_note` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',

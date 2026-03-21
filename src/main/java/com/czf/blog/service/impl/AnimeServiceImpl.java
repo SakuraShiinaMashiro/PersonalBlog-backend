@@ -1,6 +1,7 @@
 package com.czf.blog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.czf.blog.dto.AnimeImportResult;
 import com.czf.blog.dto.BangumiDTOs;
 import com.czf.blog.entity.AnimeProgress;
 import com.czf.blog.entity.AnimeSubject;
@@ -69,7 +70,7 @@ public class AnimeServiceImpl implements AnimeService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void importFromBangumi(int bgmId) {
+    public AnimeImportResult importFromBangumi(int bgmId) {
         log.info("Importing anime from Bangumi, bgmId: {}", bgmId);
         try {
             BangumiDTOs.SubjectItem item = bangumiRestClient.get()
@@ -81,25 +82,39 @@ public class AnimeServiceImpl implements AnimeService {
                 throw new RuntimeException("未能获取到番剧详情，bgmId: " + bgmId);
             }
 
-            // 保存番剧元数据
             LocalDate airDate = parseAirDate(item.date());
-            AnimeSubject subject = new AnimeSubject();
-            subject.setBgmId(bgmId);
-            subject.setTitle(item.getDisplayName());
-            subject.setImageUrl(item.images() != null ? item.images().large() : "");
-            subject.setEps(item.eps());
-            subject.setAirDate(airDate);
-            subject.setAirYear(airDate != null ? airDate.getYear() : null);
-            subject.setAirSeason(airDate != null ? resolveSeason(airDate.getMonthValue()) : null);
-            subjectMapper.insert(subject);
+            AnimeSubject existingSubject = subjectMapper.selectOne(new LambdaQueryWrapper<AnimeSubject>()
+                    .eq(AnimeSubject::getBgmId, bgmId)
+                    .last("LIMIT 1"));
 
-            // 初始化进度
-            AnimeProgress progress = new AnimeProgress();
-            progress.setAnimeId(subject.getId());
-            progress.setStatus(0);
-            progress.setWatchedEps(new ArrayList<>());
-            progress.setTrackDate(LocalDate.now());
-            progressMapper.insert(progress);
+            if (existingSubject == null) {
+                AnimeSubject subject = new AnimeSubject();
+                subject.setBgmId(bgmId);
+                subject.setTitle(item.getDisplayName());
+                subject.setImageUrl(item.images() != null ? item.images().large() : "");
+                subject.setEps(item.eps());
+                subject.setAirDate(airDate);
+                subject.setAirYear(airDate != null ? airDate.getYear() : null);
+                subject.setAirSeason(airDate != null ? resolveSeason(airDate.getMonthValue()) : null);
+                subjectMapper.insert(subject);
+
+                AnimeProgress progress = new AnimeProgress();
+                progress.setAnimeId(subject.getId());
+                progress.setStatus(0);
+                progress.setWatchedEps(new ArrayList<>());
+                progress.setTrackDate(LocalDate.now());
+                progressMapper.insert(progress);
+                return AnimeImportResult.created();
+            }
+
+            existingSubject.setTitle(item.getDisplayName());
+            existingSubject.setImageUrl(item.images() != null ? item.images().large() : "");
+            existingSubject.setEps(item.eps());
+            existingSubject.setAirDate(airDate);
+            existingSubject.setAirYear(airDate != null ? airDate.getYear() : null);
+            existingSubject.setAirSeason(airDate != null ? resolveSeason(airDate.getMonthValue()) : null);
+            subjectMapper.updateById(existingSubject);
+            return AnimeImportResult.updated();
 
         } catch (Exception e) {
             log.error("Failed to import anime from Bangumi, bgmId: {}", bgmId, e);

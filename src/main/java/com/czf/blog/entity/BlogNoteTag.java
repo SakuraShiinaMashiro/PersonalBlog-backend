@@ -19,6 +19,6 @@ import lombok.NoArgsConstructor;
 public class BlogNoteTag {
     @TableField("note_id")
     private Long noteId;
-    
+    @TableField("tag_id")
     private Long tagId;
 }

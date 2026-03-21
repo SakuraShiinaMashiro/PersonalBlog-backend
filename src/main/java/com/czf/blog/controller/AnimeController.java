@@ -1,6 +1,7 @@
 package com.czf.blog.controller;
 
 import com.czf.blog.common.Result;
+import com.czf.blog.dto.AnimeImportResult;
 import com.czf.blog.dto.BangumiDTOs;
 import com.czf.blog.service.AnimeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,10 +41,9 @@ public class AnimeController {
 
     @Operation(summary = "导入番剧", description = "从 Bangumi 导入番剧元数据到本地库并初始化追番进度")
     @PostMapping("/import")
-    public Result<Void> importAnime(@RequestBody Map<String, Object> params) {
+    public Result<AnimeImportResult> importAnime(@RequestBody Map<String, Object> params) {
         int bgmId = Integer.parseInt(params.get("bgmId").toString());
-        animeService.importFromBangumi(bgmId);
-        return Result.success();
+        return Result.success(animeService.importFromBangumi(bgmId));
     }
 
     @Operation(summary = "获取追番列表", description = "获取已导入的番剧列表，支持按年份和季度筛选，可选参数不传则返回全部")

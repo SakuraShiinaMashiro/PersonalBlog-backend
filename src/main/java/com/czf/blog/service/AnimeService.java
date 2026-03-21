@@ -1,5 +1,6 @@
 package com.czf.blog.service;
 
+import com.czf.blog.dto.AnimeImportResult;
 import com.czf.blog.dto.BangumiDTOs;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,7 @@ public interface AnimeService {
      *
      * @param bgmId     Bangumi 条目 ID
      */
-    void importFromBangumi(int bgmId);
+    AnimeImportResult importFromBangumi(int bgmId);
 
     /**
      * 获取指定年份的某个季度下的本地番剧列表及其追番进度（番剧的首播时间）
