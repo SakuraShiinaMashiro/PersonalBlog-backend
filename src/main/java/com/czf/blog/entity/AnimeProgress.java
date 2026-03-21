@@ -11,6 +11,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * @author challenge
+ */
 @Data
 @TableName(value = "blog_anime_progress", autoResultMap = true)
 public class AnimeProgress {
