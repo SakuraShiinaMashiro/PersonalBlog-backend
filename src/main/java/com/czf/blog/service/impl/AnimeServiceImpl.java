@@ -6,6 +6,7 @@ import com.czf.blog.dto.BangumiDTOs;
 import com.czf.blog.entity.AnimeProgress;
 import com.czf.blog.entity.AnimeSubject;
 import com.czf.blog.exception.BizException;
+import com.czf.blog.exception.code.BizErrorCode;
 import com.czf.blog.mapper.AnimeProgressMapper;
 import com.czf.blog.mapper.AnimeSubjectMapper;
 import com.czf.blog.service.AnimeService;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -26,6 +29,7 @@ import java.util.Set;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.net.SocketTimeoutException;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 
@@ -45,28 +49,35 @@ public class AnimeServiceImpl implements AnimeService {
 
     @Override
     public List<BangumiDTOs.SubjectItem> searchBangumi(String keyword) {
-        log.info("Searching anime on Bangumi with keyword: {}", keyword);
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        if (normalizedKeyword.isEmpty()) {
+            throw new BizException(BizErrorCode.KEYWORD_EMPTY);
+        }
+
+        log.info("Searching anime on Bangumi with keyword: {}", normalizedKeyword);
         try {
-            // 使用 GET /search/subjects 接口
-            // 注意：Bangumi v0 的搜索接口建议使用 POST 以支持更复杂的过滤，
-            // 但为了简化并符合 spec 中的 GET 设计，我们也可以使用查询参数。
-            // 实际上 Bangumi v0 搜索建议用 POST，这里我们根据实际情况调整。
-            
             BangumiDTOs.SubjectSearchResponse response = bangumiRestClient.post()
                     .uri("/search/subjects")
                     .body(Map.of(
-                            "keyword", keyword,
-                            // 2 为动画
+                            "keyword", normalizedKeyword,
                             "filter", Map.of("type", List.of(2))
                     ))
                     .retrieve()
                     .body(BangumiDTOs.SubjectSearchResponse.class);
 
             return response != null ? response.data() : List.of();
+        } catch (ResourceAccessException e) {
+            log.error("Bangumi search timeout or network issue, keyword: {}", normalizedKeyword, e);
+            if (isTimeoutException(e)) {
+                throw new BizException(BizErrorCode.BANGUMI_SEARCH_TIMEOUT);
+            }
+            throw new BizException(BizErrorCode.BANGUMI_SEARCH_UNAVAILABLE);
+        } catch (RestClientException e) {
+            log.error("Bangumi search request failed, keyword: {}", normalizedKeyword, e);
+            throw new BizException(BizErrorCode.BANGUMI_SEARCH_UNAVAILABLE);
         } catch (Exception e) {
-            log.error("Failed to search Bangumi with keyword: {}", keyword, e);
-            // 按照设计决策，外部服务失败时返回空列表或友好错误
-            return List.of();
+            log.error("Unexpected Bangumi search error, keyword: {}", normalizedKeyword, e);
+            throw new BizException(BizErrorCode.BANGUMI_SEARCH_UNAVAILABLE);
         }
     }
 
@@ -398,5 +409,16 @@ public class AnimeServiceImpl implements AnimeService {
             return 3;
         }
         return 4;
+    }
+
+    private boolean isTimeoutException(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
