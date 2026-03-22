@@ -106,4 +106,11 @@ public class AnimeController {
         animeService.updateTrackDate(dto.animeId(), dto.trackDate());
         return Result.success();
     }
+
+    @Operation(summary = "删除追番记录", description = "按本地 animeId 删除追番记录，关联进度将级联删除")
+    @DeleteMapping("/{animeId}")
+    public Result<Void> deleteAnime(@PathVariable("animeId") Long animeId) {
+        animeService.deleteAnime(animeId);
+        return Result.success();
+    }
 }
