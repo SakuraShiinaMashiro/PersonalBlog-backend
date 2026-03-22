@@ -1,5 +1,7 @@
 package com.czf.blog.exception;
 
+import com.czf.blog.exception.code.BizErrorCode;
+
 /**
  * @description: 业务异常，用于承载可预期的业务错误信息与状态码
  * @author czf
@@ -27,6 +29,16 @@ public class BizException extends RuntimeException {
     public BizException(Integer code, String message) {
         super(message);
         this.code = code;
+    }
+
+    /**
+     * 使用业务错误码枚举创建业务异常。
+     *
+     * @param errorCode 业务错误码枚举
+     */
+    public BizException(BizErrorCode errorCode) {
+        super(errorCode.getMessage());
+        this.code = errorCode.getCode();
     }
 
     /**
