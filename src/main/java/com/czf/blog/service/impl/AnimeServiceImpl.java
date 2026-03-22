@@ -72,7 +72,7 @@ public class AnimeServiceImpl implements AnimeService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public AnimeImportResult importFromBangumi(int bgmId) {
+    public AnimeImportResult importFromBangumi(int bgmId, LocalDate trackDate) {
         log.info("Importing anime from Bangumi, bgmId: {}", bgmId);
         try {
             BangumiDTOs.SubjectItem item = bangumiRestClient.get()
@@ -104,7 +104,7 @@ public class AnimeServiceImpl implements AnimeService {
                 progress.setAnimeId(subject.getId());
                 progress.setStatus(0);
                 progress.setWatchedEps(new ArrayList<>());
-                progress.setTrackDate(LocalDate.now());
+                progress.setTrackDate(trackDate != null ? trackDate : LocalDate.now());
                 progressMapper.insert(progress);
                 return AnimeImportResult.created();
             }
@@ -232,6 +232,33 @@ public class AnimeServiceImpl implements AnimeService {
     public void resetProgress(Long animeId) {
         AnimeSubject subject = requireSubject(animeId);
         applyProgress(subject, List.of());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateTrackDate(Long animeId, LocalDate trackDate) {
+        if (trackDate == null) {
+            throw new BizException("追番时间不能为空");
+        }
+        if (trackDate.isAfter(LocalDate.now())) {
+            throw new BizException("追番时间不能晚于今天");
+        }
+
+        AnimeSubject subject = requireSubject(animeId);
+        AnimeProgress progress = progressMapper.selectById(subject.getId());
+
+        if (progress == null) {
+            progress = new AnimeProgress();
+            progress.setAnimeId(subject.getId());
+            progress.setStatus(0);
+            progress.setWatchedEps(new ArrayList<>());
+            progress.setTrackDate(trackDate);
+            progressMapper.insert(progress);
+            return;
+        }
+
+        progress.setTrackDate(trackDate);
+        progressMapper.updateById(progress);
     }
 
     private AnimeSubject requireSubject(Long animeId) {
