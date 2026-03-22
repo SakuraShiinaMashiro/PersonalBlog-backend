@@ -73,4 +73,11 @@ public interface AnimeService {
      * @param trackDate 新的开始追番日期
      */
     void updateTrackDate(Long animeId, LocalDate trackDate);
+
+    /**
+     * 删除指定追番记录。
+     *
+     * @param animeId 本地番剧 ID
+     */
+    void deleteAnime(Long animeId);
 }

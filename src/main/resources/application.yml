@@ -17,6 +17,10 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: true
 
+
+# http://localhost:8080/doc.html
+# Swagger UI：http://localhost:8080/swagger-ui/index.html
+# OpenAPI JSON：http://localhost:8080/v3/api-docs
 springdoc:
   swagger-ui:
     enabled: true

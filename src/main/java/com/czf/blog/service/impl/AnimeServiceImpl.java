@@ -295,6 +295,13 @@ public class AnimeServiceImpl implements AnimeService {
         progressMapper.updateById(progress);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteAnime(Long animeId) {
+        AnimeSubject subject = requireSubject(animeId);
+        subjectMapper.deleteById(subject.getId());
+    }
+
     private void validateListQueryParams(Integer season, Integer status, LocalDate trackDateStart, LocalDate trackDateEnd) {
         if (season != null && (season < 1 || season > 4)) {
             throw new BizException("参数错误：season 必须在 1-4 之间");
