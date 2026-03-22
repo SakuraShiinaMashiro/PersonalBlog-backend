@@ -15,8 +15,10 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -53,13 +55,21 @@ public class AnimeController {
     @Operation(summary = "获取追番列表", description = "获取已导入的番剧列表，支持按年份和季度筛选，可选参数不传则返回全部")
     @Parameters({
             @Parameter(name = "year", description = "播出年份筛选", in = ParameterIn.QUERY),
-            @Parameter(name = "season", description = "播出季度筛选（1-4）", in = ParameterIn.QUERY)
+            @Parameter(name = "season", description = "播出季度筛选（1-4）", in = ParameterIn.QUERY),
+            @Parameter(name = "status", description = "追番状态筛选（0-想看，1-在看，2-已看完）", in = ParameterIn.QUERY),
+            @Parameter(name = "trackDateStart", description = "开始追番起始日期（yyyy-MM-dd）", in = ParameterIn.QUERY),
+            @Parameter(name = "trackDateEnd", description = "开始追番结束日期（yyyy-MM-dd）", in = ParameterIn.QUERY)
     })
     @GetMapping("/list")
     public Result<List<Map<String, Object>>> getList(
             @RequestParam(value = "year", required = false) Integer year,
-            @RequestParam(value = "season", required = false) Integer season) {
-        return Result.success(animeService.getAnimeListWithProgress(year, season));
+            @RequestParam(value = "season", required = false) Integer season,
+            @RequestParam(value = "status", required = false) Integer status,
+            @RequestParam(value = "trackDateStart", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate trackDateStart,
+            @RequestParam(value = "trackDateEnd", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate trackDateEnd) {
+        return Result.success(animeService.getAnimeListWithProgress(year, season, status, trackDateStart, trackDateEnd));
     }
 
     @Operation(summary = "切换单集观看状态", description = "切换指定集数的已看/未看状态（幂等操作：已看则移除，未看则添加）")

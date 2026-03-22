@@ -127,7 +127,10 @@ public class AnimeServiceImpl implements AnimeService {
     }
 
     @Override
-    public List<Map<String, Object>> getAnimeListWithProgress(Integer year, Integer season) {
+    public List<Map<String, Object>> getAnimeListWithProgress(Integer year, Integer season, Integer status,
+                                                              LocalDate trackDateStart, LocalDate trackDateEnd) {
+        validateListQueryParams(season, status, trackDateStart, trackDateEnd);
+
         LambdaQueryWrapper<AnimeSubject> queryWrapper = new LambdaQueryWrapper<>();
         if (year != null) {
             queryWrapper.eq(AnimeSubject::getAirYear, year);
@@ -135,19 +138,39 @@ public class AnimeServiceImpl implements AnimeService {
         if (season != null) {
             queryWrapper.eq(AnimeSubject::getAirSeason, season);
         }
+
         List<AnimeSubject> subjects = subjectMapper.selectList(queryWrapper);
+
         return subjects.stream().map(s -> {
             Map<String, Object> map = new HashMap<>();
             map.put("subject", s);
             map.put("progress", progressMapper.selectById(s.getId()));
             return map;
-        }).sorted(Comparator.comparing(
-                item -> {
-                    AnimeProgress progress = (AnimeProgress) item.get("progress");
-                    return progress == null ? null : progress.getTrackDate();
-                },
-                Comparator.nullsLast(Comparator.reverseOrder())
-        )).collect(Collectors.toList());
+        }).filter(item -> matchStatus(item, status))
+                .filter(item -> matchTrackDateRange(item, trackDateStart, trackDateEnd))
+                .sorted(Comparator
+                        .comparing(
+                                (Map<String, Object> item) -> {
+                                    AnimeProgress progress = (AnimeProgress) item.get("progress");
+                                    return progress == null ? null : progress.getLastWatchAt();
+                                },
+                                Comparator.nullsLast(Comparator.reverseOrder())
+                        )
+                        .thenComparing(
+                                item -> {
+                                    AnimeProgress progress = (AnimeProgress) item.get("progress");
+                                    return progress == null ? null : progress.getTrackDate();
+                                },
+                                Comparator.nullsLast(Comparator.reverseOrder())
+                        )
+                        .thenComparing(
+                                item -> {
+                                    AnimeSubject subject = (AnimeSubject) item.get("subject");
+                                    return subject == null ? null : subject.getId();
+                                },
+                                Comparator.nullsLast(Comparator.reverseOrder())
+                        ))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -259,6 +282,44 @@ public class AnimeServiceImpl implements AnimeService {
 
         progress.setTrackDate(trackDate);
         progressMapper.updateById(progress);
+    }
+
+    private void validateListQueryParams(Integer season, Integer status, LocalDate trackDateStart, LocalDate trackDateEnd) {
+        if (season != null && (season < 1 || season > 4)) {
+            throw new BizException("参数错误：season 必须在 1-4 之间");
+        }
+        if (status != null && (status < 0 || status > 2)) {
+            throw new BizException("参数错误：status 必须在 0-2 之间");
+        }
+        if (trackDateStart != null && trackDateEnd != null && trackDateStart.isAfter(trackDateEnd)) {
+            throw new BizException("参数错误：开始日期不能晚于结束日期");
+        }
+    }
+
+    private boolean matchStatus(Map<String, Object> item, Integer status) {
+        if (status == null) {
+            return true;
+        }
+        AnimeProgress progress = (AnimeProgress) item.get("progress");
+        return progress != null && Objects.equals(progress.getStatus(), status);
+    }
+
+    private boolean matchTrackDateRange(Map<String, Object> item, LocalDate trackDateStart, LocalDate trackDateEnd) {
+        if (trackDateStart == null && trackDateEnd == null) {
+            return true;
+        }
+        AnimeProgress progress = (AnimeProgress) item.get("progress");
+        if (progress == null || progress.getTrackDate() == null) {
+            return false;
+        }
+        LocalDate trackDate = progress.getTrackDate();
+        if (trackDateStart != null && trackDate.isBefore(trackDateStart)) {
+            return false;
+        }
+        if (trackDateEnd != null && trackDate.isAfter(trackDateEnd)) {
+            return false;
+        }
+        return true;
     }
 
     private AnimeSubject requireSubject(Long animeId) {

@@ -24,13 +24,17 @@ public interface AnimeService {
     AnimeImportResult importFromBangumi(int bgmId, LocalDate trackDate);
 
     /**
-     * 获取指定年份的某个季度下的本地番剧列表及其追番进度（番剧的首播时间）
+     * 根据条件筛选已追番剧，此处的年份和季度指代首播时间
      *
-     * @param year   年份 (可选)
-     * @param season 季度 (可选, 1-4)
+     * @param year           年份 (可选)
+     * @param season         季度 (可选, 1-4)
+     * @param status         追番状态 (可选, 0/1/2)
+     * @param trackDateStart 开始追番起始日期 (可选)
+     * @param trackDateEnd   开始追番结束日期 (可选)
      * @return 包含番剧元数据和进度信息的映射列表
      */
-    List<Map<String, Object>> getAnimeListWithProgress(Integer year, Integer season);
+    List<Map<String, Object>> getAnimeListWithProgress(Integer year, Integer season, Integer status,
+                                                       LocalDate trackDateStart, LocalDate trackDateEnd);
 
     /**
      * 切换特定集数的观看状态 (幂等 Toggle 逻辑)
