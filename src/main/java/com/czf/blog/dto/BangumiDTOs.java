@@ -5,6 +5,7 @@ import java.util.List;
 
 /**
  * Bangumi API v0 Response Records
+ * @author challenge
  */
 public class BangumiDTOs {
 

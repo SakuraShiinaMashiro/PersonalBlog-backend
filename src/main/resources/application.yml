@@ -9,6 +9,18 @@ spring:
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+  mail:
+    host: smtp.google.com
+    port: 465
+    username: czf871953354@gmail.com
+    password: your_password
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
@@ -30,4 +42,9 @@ springdoc:
 knife4j:
   setting:
     language: zh_CN
+
+jwt:
+  secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+  access-expire-minutes: 30
+  refresh-expire-days: 7
 
