@@ -1,11 +1,11 @@
-package com.czf.blog.common;
+package com.czf.blog.enums;
 
 /**
  * @description: 角色类型枚举
  * @author czf
  * @date 2026-03-31
  */
-public enum RoleType {
+public enum RoleTypeEnum {
     /**
      * 博主角色，拥有写权限
      */

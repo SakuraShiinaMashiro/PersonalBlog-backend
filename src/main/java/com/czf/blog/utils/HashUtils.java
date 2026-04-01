@@ -1,4 +1,4 @@
-package com.czf.blog.common;
+package com.czf.blog.utils;
 
 import com.czf.blog.exception.BizException;
 
