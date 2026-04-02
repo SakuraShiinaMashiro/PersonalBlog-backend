@@ -54,7 +54,7 @@ oauth:
       enabled: true
       client-id: ""
       client-secret: ""
-      redirect-uri: "http://localhost:8080/api/auth/oauth/github/callback"
+      redirect-uri: "http://localhost:5173/oauth/callback/github"
       authorize-url: "https://github.com/login/oauth/authorize"
       token-url: "https://github.com/login/oauth/access_token"
       user-info-url: "https://api.github.com/user"
