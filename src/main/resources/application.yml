@@ -11,7 +11,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   mail:
     host: smtp.gmail.com
-    port: 465
+    port: 587
     username: czf871953354@gmail.com
     password: your_password
     protocol: smtp
@@ -19,8 +19,9 @@ spring:
       mail:
         smtp:
           auth: true
-          ssl:
+          starttls:
             enable: true
+            required: true
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
