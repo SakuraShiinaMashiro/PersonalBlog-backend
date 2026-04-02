@@ -1,5 +1,6 @@
 package com.czf.blog.filter;
 
+import com.czf.blog.constant.AuthConstants;
 import com.czf.blog.security.UserPrincipal;
 import com.czf.blog.service.TokenService;
 import jakarta.servlet.FilterChain;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -40,11 +42,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
+        if (StringUtils.hasText(header) && header.startsWith(AuthConstants.BEARER_PREFIX)) {
+            String token = header.substring(AuthConstants.BEARER_PREFIX_LENGTH);
             UserPrincipal principal = tokenService.parseAccessToken(token);
             if (principal != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 String role = principal.role();

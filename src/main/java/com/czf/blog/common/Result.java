@@ -5,6 +5,7 @@ import lombok.Data;
 /**
  * 统一接口返回格式
  *
+ * @author challenge
  * @param <T> 数据类型
  */
 @Data

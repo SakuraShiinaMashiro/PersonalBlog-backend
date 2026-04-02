@@ -10,7 +10,7 @@ spring:
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
   mail:
-    host: smtp.google.com
+    host: smtp.gmail.com
     port: 465
     username: czf871953354@gmail.com
     password: your_password
@@ -48,3 +48,47 @@ jwt:
   access-expire-minutes: 30
   refresh-expire-days: 7
 
+oauth:
+  providers:
+    github:
+      enabled: true
+      client-id: ""
+      client-secret: ""
+      redirect-uri: "http://localhost:8080/api/auth/oauth/github/callback"
+      authorize-url: "https://github.com/login/oauth/authorize"
+      token-url: "https://github.com/login/oauth/access_token"
+      user-info-url: "https://api.github.com/user"
+      scope: "read:user user:email"
+      user-id-field: "id"
+      username-field: "login"
+      avatar-field: "avatar_url"
+      access-token-in-query: false
+      access-token-field: "access_token"
+    google:
+      enabled: false
+      client-id: ""
+      client-secret: ""
+      redirect-uri: ""
+      authorize-url: "https://accounts.google.com/o/oauth2/v2/auth"
+      token-url: "https://oauth2.googleapis.com/token"
+      user-info-url: "https://openidconnect.googleapis.com/v1/userinfo"
+      scope: "openid email profile"
+      user-id-field: "sub"
+      username-field: "name"
+      avatar-field: "picture"
+      access-token-in-query: false
+      access-token-field: "access_token"
+    sina:
+      enabled: false
+      client-id: ""
+      client-secret: ""
+      redirect-uri: ""
+      authorize-url: ""
+      token-url: ""
+      user-info-url: ""
+      scope: ""
+      user-id-field: ""
+      username-field: ""
+      avatar-field: ""
+      access-token-in-query: true
+      access-token-field: "access_token"

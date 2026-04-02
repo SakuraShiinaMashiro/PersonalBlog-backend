@@ -1,5 +1,5 @@
 -- 用户认证与权限校验模块表结构
-
+Drop Table If Exists `blog_user`;
 CREATE TABLE IF NOT EXISTS `blog_user` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `role` VARCHAR(20) NOT NULL COMMENT '角色: OWNER/VISITOR',
@@ -15,10 +15,11 @@ CREATE TABLE IF NOT EXISTS `blog_user` (
   UNIQUE KEY `uk_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户表';
 
+Drop Table If Exists `blog_user_oauth`;
 CREATE TABLE IF NOT EXISTS `blog_user_oauth` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
-  `provider` VARCHAR(20) NOT NULL COMMENT '第三方平台: github/gitee/google/bilibili',
+  `provider` VARCHAR(20) NOT NULL COMMENT '第三方平台: github/google/sina',
   `provider_user_id` VARCHAR(128) NOT NULL COMMENT '平台用户ID',
   `access_token` VARCHAR(255) DEFAULT NULL COMMENT 'OAuth Access Token(可选)',
   `refresh_token` VARCHAR(255) DEFAULT NULL COMMENT 'OAuth Refresh Token(可选)',
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS `blog_user_oauth` (
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='OAuth 关联表';
 
+drop table if exists `blog_owner_key`;
 CREATE TABLE IF NOT EXISTS `blog_owner_key` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `key_hash` VARCHAR(255) NOT NULL COMMENT '密钥哈希',
@@ -56,3 +58,16 @@ CREATE TABLE IF NOT EXISTS `blog_email_code` (
   PRIMARY KEY (`id`),
   KEY `idx_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='邮箱验证码表';
+
+-- 初始数据示例（已填入可用值）
+-- 1) 初始化博主账号（OWNER）
+-- 密码为 BCrypt 加密值
+INSERT INTO `blog_user` (
+  `role`, `username`, `password_hash`, `email`, `email_verified`, `avatar_url`, `status`
+) VALUES (
+  'OWNER', 'challenge', '$2a$10$NgV.8ngzsqg1Ai.dayRsJuRF/PPSKFxpQf/Q8Nk8xw/Dz2FwTbsBG', '871953354@qq.com', 1, 'https://uploadfiles.nowcoder.com/images/20250812/296966364_1755006903365/FECD76F09C4EFFA7102ECDBC1795FB3B', 1
+);
+
+-- 2) 初始化密钥哈希（用于导入密钥解锁）
+-- 密钥文件内容使用 SHA-256 计算后写入
+INSERT INTO `blog_owner_key` (`key_hash`, `enabled`) VALUES ('73d750027fc1ad4dea9e470d77ca39ece0758f86e2e00b8aff993f72639d0551', 1);
