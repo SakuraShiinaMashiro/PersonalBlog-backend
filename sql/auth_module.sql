@@ -1,5 +1,5 @@
 -- 用户认证与权限校验模块表结构
-Drop Table If Exists `blog_user`;
+DROP TABLE IF EXISTS `blog_user`;
 CREATE TABLE IF NOT EXISTS `blog_user` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `role` VARCHAR(20) NOT NULL COMMENT '角色: OWNER/VISITOR',
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `blog_user` (
   UNIQUE KEY `uk_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户表';
 
-Drop Table If Exists `blog_user_oauth`;
+DROP TABLE IF EXISTS `blog_user_oauth`;
 CREATE TABLE IF NOT EXISTS `blog_user_oauth` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `blog_user_oauth` (
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='OAuth 关联表';
 
-drop table if exists `blog_owner_key`;
+DROP TABLE IF EXISTS `blog_owner_key`;
 CREATE TABLE IF NOT EXISTS `blog_owner_key` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `key_hash` VARCHAR(255) NOT NULL COMMENT '密钥哈希',
