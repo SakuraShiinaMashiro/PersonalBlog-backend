@@ -35,9 +35,10 @@ public class AuthServiceImpl implements AuthService {
      * 校验博主账号密码并进入邮箱验证阶段。
      *
      * @param dto 博主登录参数
+     * @return 博主邮箱
      */
     @Override
-    public void ownerLogin(OwnerLoginDTO dto) {
+    public String ownerLogin(OwnerLoginDTO dto) {
         if (dto == null || !StringUtils.hasText(dto.username()) || !StringUtils.hasText(dto.password())) {
             throw new BizException(BizErrorCode.AUTH_INVALID_CREDENTIALS);
         }
@@ -51,6 +52,10 @@ public class AuthServiceImpl implements AuthService {
         if (user.getPasswordHash() == null || !passwordEncoder.matches(dto.password(), user.getPasswordHash())) {
             throw new BizException(BizErrorCode.AUTH_INVALID_CREDENTIALS);
         }
+        if (!StringUtils.hasText(user.getEmail())) {
+            throw new BizException("博主邮箱未配置");
+        }
+        return user.getEmail();
     }
 
     /**

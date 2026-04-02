@@ -16,7 +16,9 @@ import com.czf.blog.service.AuthService;
 import com.czf.blog.service.EmailCodeService;
 import com.czf.blog.service.OwnerKeyService;
 import com.czf.blog.service.TokenService;
+import com.czf.blog.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +37,7 @@ public class AuthController {
     private final AuthService authService;
     private final EmailCodeService emailCodeService;
     private final TokenService tokenService;
+    private final UserService userService;
 
     /**
      * 校验博主登录入口密钥。
@@ -64,12 +67,12 @@ public class AuthController {
      * 博主账号密码登录。
      *
      * @param dto 登录参数
-     * @return 是否需要邮箱验证
+     * @return 是否需要邮箱验证与博主邮箱
      */
     @PostMapping("/owner/login")
     public Result<EmailVerifyStatusVO> ownerLogin(@RequestBody OwnerLoginDTO dto) {
-        authService.ownerLogin(dto);
-        return Result.success(new EmailVerifyStatusVO(true));
+        String email = authService.ownerLogin(dto);
+        return Result.success(new EmailVerifyStatusVO(true, email));
     }
 
     /**
@@ -80,6 +83,13 @@ public class AuthController {
      */
     @PostMapping("/owner/send-email-code")
     public Result<EmailSendVO> sendEmailCode(@RequestBody EmailCodeDTO dto) {
+        if (dto == null || !StringUtils.hasText(dto.email())) {
+            throw new BizException(BizErrorCode.AUTH_EMAIL_MISMATCH);
+        }
+        String ownerEmail = userService.findOwner().getEmail();
+        if (!StringUtils.hasText(ownerEmail) || !ownerEmail.equals(dto.email())) {
+            throw new BizException(BizErrorCode.AUTH_EMAIL_MISMATCH);
+        }
         emailCodeService.sendCode(dto.email());
         return Result.success(new EmailSendVO(true));
     }

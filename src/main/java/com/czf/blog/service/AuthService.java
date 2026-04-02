@@ -14,8 +14,9 @@ public interface AuthService {
      * 校验博主账号密码并进入邮箱验证阶段。
      *
      * @param dto 博主登录参数
+     * @return 博主邮箱
      */
-    void ownerLogin(OwnerLoginDTO dto);
+    String ownerLogin(OwnerLoginDTO dto);
 
     /**
      * 校验邮箱验证码并签发 Token。

@@ -5,5 +5,5 @@ package com.czf.blog.dto;
  * @author czf
  * @date 2026-03-31
  */
-public record EmailVerifyStatusVO(boolean needEmailVerify) {
+public record EmailVerifyStatusVO(boolean needEmailVerify, String email) {
 }
