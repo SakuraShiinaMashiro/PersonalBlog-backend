@@ -1,6 +1,7 @@
 package com.czf.blog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.czf.blog.utils.AsyncExecutor;
 import com.czf.blog.utils.HashUtils;
 import com.czf.blog.entity.BlogEmailCode;
 import com.czf.blog.exception.BizException;
@@ -70,10 +71,12 @@ public class EmailCodeServiceImpl implements EmailCodeService {
 
         String subject = "个人博客验证码";
         String content = buildHtmlContent(code);
-        boolean sent = sendMail(email, subject, content);
-        if (!sent) {
-            throw new BizException("验证码发送失败");
-        }
+        AsyncExecutor.execute(() -> {
+            boolean sent = sendMail(email, subject, content);
+            if (!sent) {
+                log.error("验证码异步发送失败, email={}", email);
+            }
+        });
     }
 
     /**
