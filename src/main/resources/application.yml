@@ -2,18 +2,20 @@ server:
   port: 8080
 
 spring:
+  profiles:
+    active: dev
   application:
     name: PersonalBlog-backend
   datasource:
     url: jdbc:mysql://localhost:3306/blog?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
   mail:
     host: smtp.gmail.com
     port: 587
-    username: czf871953354@gmail.com
-    password: your_password
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     protocol: smtp
     properties:
       mail:
@@ -45,7 +47,7 @@ knife4j:
     language: zh_CN
 
 jwt:
-  secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+  secret: ${JWT_SECRET:CHANGE_ME_TO_A_LONG_RANDOM_SECRET}
   access-expire-minutes: 30
   refresh-expire-days: 7
 
@@ -53,9 +55,9 @@ oauth:
   providers:
     github:
       enabled: true
-      client-id: ""
-      client-secret: ""
-      redirect-uri: "http://localhost:5173/oauth/callback/github"
+      client-id: ${OAUTH_GITHUB_CLIENT_ID:}
+      client-secret: ${OAUTH_GITHUB_CLIENT_SECRET:}
+      redirect-uri: http://localhost:8080/api/auth/oauth/github/callback
       authorize-url: "https://github.com/login/oauth/authorize"
       token-url: "https://github.com/login/oauth/access_token"
       user-info-url: "https://api.github.com/user"
@@ -67,9 +69,9 @@ oauth:
       access-token-field: "access_token"
     google:
       enabled: false
-      client-id: ""
-      client-secret: ""
-      redirect-uri: ""
+      client-id: ${OAUTH_GOOGLE_CLIENT_ID:}
+      client-secret: ${OAUTH_GOOGLE_CLIENT_SECRET:}
+      redirect-uri: ${OAUTH_GOOGLE_REDIRECT_URI:}
       authorize-url: "https://accounts.google.com/o/oauth2/v2/auth"
       token-url: "https://oauth2.googleapis.com/token"
       user-info-url: "https://openidconnect.googleapis.com/v1/userinfo"
@@ -81,15 +83,15 @@ oauth:
       access-token-field: "access_token"
     sina:
       enabled: false
-      client-id: ""
-      client-secret: ""
-      redirect-uri: ""
-      authorize-url: ""
-      token-url: ""
-      user-info-url: ""
-      scope: ""
-      user-id-field: ""
-      username-field: ""
-      avatar-field: ""
+      client-id: ${OAUTH_SINA_CLIENT_ID:}
+      client-secret: ${OAUTH_SINA_CLIENT_SECRET:}
+      redirect-uri: ${OAUTH_SINA_REDIRECT_URI:}
+      authorize-url: ${OAUTH_SINA_AUTHORIZE_URL:}
+      token-url: ${OAUTH_SINA_TOKEN_URL:}
+      user-info-url: ${OAUTH_SINA_USER_INFO_URL:}
+      scope: ${OAUTH_SINA_SCOPE:}
+      user-id-field: ${OAUTH_SINA_USER_ID_FIELD:}
+      username-field: ${OAUTH_SINA_USERNAME_FIELD:}
+      avatar-field: ${OAUTH_SINA_AVATAR_FIELD:}
       access-token-in-query: true
       access-token-field: "access_token"
