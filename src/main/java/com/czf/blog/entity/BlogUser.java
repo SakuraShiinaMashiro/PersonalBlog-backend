@@ -28,8 +28,6 @@ public class BlogUser {
 
     private String email;
 
-    private Integer emailVerified;
-
     private String avatarUrl;
 
     private Integer status;

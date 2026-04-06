@@ -77,7 +77,6 @@ public class UserServiceImpl implements UserService {
         user.setRole(RoleTypeEnum.VISITOR.name());
         user.setUsername(StringUtils.hasText(info.username()) ? info.username() : "visitor_" + info.providerUserId());
         user.setAvatarUrl(info.avatarUrl());
-        user.setEmailVerified(0);
         user.setStatus(1);
         userMapper.insert(user);
 
